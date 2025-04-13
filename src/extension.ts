@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
 
-import { extractUseEffectCalls, UseEffectData } from './utils/hashUseEffect';
 import { Collector } from './collector';
 import { Collection } from './collection';
 import { OpenAIClient } from './utils/openaiclient';
+import { UseEffectData } from "./interface";
 
 
 class UseEffectCodeLensProvider implements vscode.CodeLensProvider {
@@ -16,10 +16,16 @@ class UseEffectCodeLensProvider implements vscode.CodeLensProvider {
 
   provideCodeLenses(): vscode.CodeLens[] {
     this.codeLenses = [];
-    const useEffectCalls = this.useEffectCollection.get();
+    
+    const file = vscode.window.activeTextEditor?.document.fileName;
+    if (!file) {
+      return [];
+    }
+
+    const useEffectCalls = this.useEffectCollection.get({file});
 
     useEffectCalls.forEach(effect => {
-      console.log(`useEffect at lines ${effect.startLine}-${effect.endLine} with hash: ${effect.hash}`);
+     // console.log(`useEffect at lines ${effect.startLine}-${effect.endLine} with hash: ${effect.hash}`);
       const position = new vscode.Position(effect.startLine, 0);
       const range = new vscode.Range(position, position);
       this.codeLenses.push(
@@ -40,18 +46,18 @@ class UseEffectSuggestionProvider implements vscode.WebviewViewProvider {
   private _useEffectCalls: UseEffectData[] = [];
 
   constructor(private readonly context: vscode.ExtensionContext, useEffectCollection: Collection) {
-    this._useEffectCalls = useEffectCollection.get();
+    this._useEffectCalls = useEffectCollection.get({});
   }
 
   resolveWebviewView(webviewView: vscode.WebviewView, context: vscode.WebviewViewResolveContext): void {
-    console.log("Webview view resolved");
+    // console.log("Webview view resolved");
     this._view = webviewView;
     webviewView.webview.options = { enableScripts: true };
     webviewView.webview.html = this.getHtml();
   }
 
   updateSuggestions() {
-    console.log("Updating suggestions in webview");
+    // console.log("Updating suggestions in webview");
 
     if (this._view) {
       this._view.webview.html = this.getHtml();
@@ -59,7 +65,7 @@ class UseEffectSuggestionProvider implements vscode.WebviewViewProvider {
   }
 
   private getHtml(): string {
-    console.log("Generating HTML for webview, with list ", this._useEffectCalls);
+    // console.log("Generating HTML for webview, with list ", this._useEffectCalls);
     const cardsHtml = this._useEffectCalls
       .map(call => {
         // console.log("-----", call);
@@ -132,6 +138,3 @@ context.subscriptions.push(
 
 
 export function deactivate() {}
-
-
-
