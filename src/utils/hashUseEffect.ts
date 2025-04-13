@@ -11,38 +11,47 @@ export interface UseEffectData {
 }
 
 export function extractUseEffectCalls(code: string): UseEffectData[] {
-  const ast = parser.parse(code, {
-    sourceType: 'module',
-    plugins: ['jsx', 'typescript'],
-  });
+  var ast;
+  try {
+    ast = parser.parse(code, {
+      sourceType: 'module',
+      plugins: ['jsx', 'typescript'],
+    });
+  } catch (error) {
+    console.error('Error while parsing code into AST: ', error);
+    return [];
+  }
 
-  const results: UseEffectData[] = [];
+    const results: UseEffectData[] = [];
+  try{
+    traverse(ast, {
+      CallExpression(path) {
+        const callee = path.node.callee;
+        if (
+          callee.type === 'Identifier' &&
+          callee.name === 'useEffect' &&
+          path.node.arguments.length
+        ) {
+          const start = path.node.loc?.start.line ?? -1;
+          const end = path.node.loc?.end.line ?? -1;
 
-  traverse(ast, {
-    CallExpression(path) {
-      const callee = path.node.callee;
-      if (
-        callee.type === 'Identifier' &&
-        callee.name === 'useEffect' &&
-        path.node.arguments.length
-      ) {
-        const start = path.node.loc?.start.line ?? -1;
-        const end = path.node.loc?.end.line ?? -1;
+          const rawCode = code.slice(path.node.start!, path.node.end!);
+          const normalizedCode = rawCode.replace(/\s+/g, '').replace(/\/\/.*|\/\*[\s\S]*?\*\//g, '');
+          const hash = crypto.createHash('sha256').update(normalizedCode).digest('hex');
 
-        const rawCode = code.slice(path.node.start!, path.node.end!);
-        const normalizedCode = rawCode.replace(/\s+/g, '').replace(/\/\/.*|\/\*[\s\S]*?\*\//g, '');
-        const hash = crypto.createHash('sha256').update(normalizedCode).digest('hex');
-
-        results.push({
-          code: rawCode,
-          startLine: start,
-          endLine: end,
-          hash,
-          suggestions: [],
-        });
-      }
-    },
-  });
+          results.push({
+            code: rawCode,
+            startLine: start,
+            endLine: end,
+            hash,
+            suggestions: [],
+          });
+        }
+      },
+    });
+  } catch (error) {
+    console.error('Error while traversing AST: ', error);
+  }
 
   return results;
 }
