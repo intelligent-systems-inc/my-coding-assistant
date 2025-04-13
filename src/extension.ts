@@ -1,14 +1,10 @@
 import * as vscode from "vscode";
-import { OpenAI } from "openai";
 
 import { extractUseEffectCalls, UseEffectData } from './utils/hashUseEffect';
 import { Collector } from './collector';
 import { Collection } from './collection';
+import { OpenAIClient } from './utils/openaiclient';
 
-
-// const openai = new OpenAI({
-//   apiKey: process.env.OPENAI_API_KEY,
-// });
 
 class UseEffectCodeLensProvider implements vscode.CodeLensProvider {
   private codeLenses: vscode.CodeLens[] = [];
@@ -96,7 +92,10 @@ export function activate(context: vscode.ExtensionContext) {
   const useEffectCollection = Collection.getInstance();
   const useEffectCollector = Collector.getInstance();
   useEffectCollector.run();
-  // setInterval(() => useEffectCollector.run(), 10000);
+  setInterval(() => useEffectCollector.run(), 10000);
+
+  const openAIClient = OpenAIClient.getInstance();
+  openAIClient.setupClient();
 
   const provider = new UseEffectCodeLensProvider(useEffectCollection);
   context.subscriptions.push(
