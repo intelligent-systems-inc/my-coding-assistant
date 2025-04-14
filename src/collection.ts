@@ -1,14 +1,20 @@
+import { OpenAIClient } from "./utils/openaiclient";
 import { UseEffectData } from "./interface";
 
 export class Collection {
     private useEffectCalls: Map<string, UseEffectData>;
     private fileMapping: Map<string, string[]>;
+    private llmclient: OpenAIClient;
     
     private static instance: Collection;
 
     private constructor() {
         this.useEffectCalls = new Map();
         this.fileMapping = new Map();
+        this.llmclient = OpenAIClient.getInstance();
+        setInterval(() => {
+            this.iterate();
+        }, 10000);
     }
 
     public static getInstance(): Collection {
@@ -23,14 +29,39 @@ export class Collection {
     }
     
     callsTableUpsert(useEffectCalls: UseEffectData[]) {
-        var count = 0;
         useEffectCalls.forEach((call) => {
-            if (!this.useEffectCalls.has(call.hash)) {
-                count++;
-                this.useEffectCalls.set(call.hash, call);
+            if (this.useEffectCalls.has(call.hash)) {
+                return
+            }
+            this.useEffectCalls.set(call.hash, call);
+            this.llmclient.getSuggestion(call.code).then(result => {
+                if (!result) {
+                    return;
+                }
+                this.useEffectCalls.get(call.hash)?.suggestions.push(result);
+              }).catch(error => {
+                console.error('Error getting suggestion:', error);
+              });
+        });
+    }
+
+    // in the background, iterate over the useEffectCalls map
+    // check if suggestions are populated
+    // if not, call the OpenAI client to get suggestions
+    // and update the map
+    iterate() {
+        this.useEffectCalls.forEach((call) => {
+            if (call.suggestions.length === 0) {
+                this.llmclient.getSuggestion(call.code).then(result => {
+                    if (!result) {
+                        return;
+                    }
+                    call.suggestions.push(result);
+                }).catch(error => {
+                    console.error('Error getting suggestion:', error);
+                });
             }
         });
-        console.log(`Upserted ${count} useEffect calls`);
     }
 
     // should never be undefined

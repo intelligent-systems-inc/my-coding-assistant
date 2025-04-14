@@ -66,7 +66,7 @@ class UseEffectSuggestionProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  updateView(opts: any = {}) {
+  async updateView(opts: any = {}) {
     if (this._view) {
       var suggestionHtml;
       if (opts['codelensHash']) {

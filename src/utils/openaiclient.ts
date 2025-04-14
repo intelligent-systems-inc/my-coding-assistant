@@ -24,4 +24,25 @@ export class OpenAIClient {
           apiKey: userOpenAISecretKey,
         });
     }
+
+    async getSuggestion(code: string): Promise<string> {
+        if (!this.client) {
+            throw new Error("OpenAI client is not initialized. Refresh IDE and input OpenAI secret key.");
+        }
+        const response = await this.client.chat.completions.create({
+            model: 'gpt-3.5-turbo',
+            messages: [
+                {
+                    role: 'user',
+                    content: `The following is a useEffect call. Does it follow best practices as per the React documentation and community? If yes, suggest an improvement. If no, say "All good!":\n\n${code}`,
+                },
+            ],
+        });
+        const result: string|null = response.choices[0].message.content;
+        console.log("OpenAI response: ", result);
+        if (result === "All good!" || result === null) {
+            return "";
+        }
+        return result;
+    }
 }
