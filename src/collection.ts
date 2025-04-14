@@ -31,7 +31,15 @@ export class Collection {
     callsTableUpsert(useEffectCalls: UseEffectData[]) {
         useEffectCalls.forEach((call) => {
             if (this.useEffectCalls.has(call.hash)) {
-                return
+                const existingCall = this.useEffectCalls.get(call.hash);
+                if (!existingCall) {
+                    return;
+                }
+                // if startLine has changed, then update the call
+                if (existingCall.startLine !== call.startLine) {
+                    existingCall.startLine = call.startLine;
+                }
+                return;
             }
             this.useEffectCalls.set(call.hash, call);
             this.llmclient.getSuggestion(call.code).then(result => {
