@@ -48,7 +48,7 @@ export class Collection {
                 }
                 this.useEffectCalls.get(call.hash)?.suggestions.push(result);
               }).catch(error => {
-                console.error('Error getting suggestion:', error);
+                console.error('Error getting suggestion:');//, error);
               });
         });
     }
