@@ -3,7 +3,6 @@ import * as vscode from "vscode";
 import { Collector } from './collector';
 import { Collection } from './collection';
 import { OpenAIClient } from './utils/openaiclient';
-import { UseEffectData } from "./interface";
 
 
 class UseEffectCodeLensProvider implements vscode.CodeLensProvider {
@@ -43,22 +42,30 @@ class UseEffectCodeLensProvider implements vscode.CodeLensProvider {
 
 class UseEffectSuggestionProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
-  private _useEffectCalls: UseEffectData[] = [];
+  private _useEffectCollection: Collection;
 
   constructor(private readonly context: vscode.ExtensionContext, useEffectCollection: Collection) {
-    this._useEffectCalls = useEffectCollection.get({});
+    this._useEffectCollection = useEffectCollection;
   }
 
-  resolveWebviewView(webviewView: vscode.WebviewView, context: vscode.WebviewViewResolveContext): void {
-    // console.log("Webview view resolved");
+  resolveWebviewView(webviewView: vscode.WebviewView, context: vscode.WebviewViewResolveContext, token: vscode.CancellationToken): void {
+    console.log("Webview view resolved");
     this._view = webviewView;
     webviewView.webview.options = { enableScripts: true };
     webviewView.webview.html = this.getHtml();
+
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) {
+        this.updateSuggestions();
+      }
+    });
+
+    webviewView.onDidDispose(() => {
+      console.log("Webview disposed");
+    });
   }
 
   updateSuggestions() {
-    // console.log("Updating suggestions in webview");
-
     if (this._view) {
       this._view.webview.html = this.getHtml();
     }
@@ -66,7 +73,7 @@ class UseEffectSuggestionProvider implements vscode.WebviewViewProvider {
 
   private getHtml(): string {
     // console.log("Generating HTML for webview, with list ", this._useEffectCalls);
-    const cardsHtml = this._useEffectCalls
+    const cardsHtml = this._useEffectCollection.get({}) // Get all useEffect calls
       .map(call => {
         // console.log("-----", call);
         return `
