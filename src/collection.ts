@@ -2,7 +2,7 @@ import { UseEffectData } from "./interface";
 
 export class Collection {
     private useEffectCalls: Map<string, UseEffectData>;
-    private fileMapping: Map<string, UseEffectData[]>;
+    private fileMapping: Map<string, string[]>;
     
     private static instance: Collection;
 
@@ -19,7 +19,7 @@ export class Collection {
     }
 
     fileMappingUpdate(file: string, useEffectCalls: UseEffectData[]) {
-        this.fileMapping.set(file, useEffectCalls);
+        this.fileMapping.set(file, useEffectCalls.map((call) => call.hash));
     }
     
     callsTableUpsert(useEffectCalls: UseEffectData[]) {
@@ -36,12 +36,26 @@ export class Collection {
     get(opts: any): UseEffectData[] {
         // If a file is specified, return useEffect calls for that file
         if (opts['file']) {
-            return this.fileMapping.get(opts['file']) || [];
+            const hashes = this.fileMapping.get(opts['file']) || [];
+            const result: UseEffectData[] = [];
+            hashes.forEach((hash) => {
+                const call = this.useEffectCalls.get(hash);
+                if (call) {
+                    result.push(call);
+                }
+            });
+            return result;
         }
+
         // If no file is specified, return all useEffect calls
-        var result: UseEffectData[] = [];
-        this.useEffectCalls.forEach((value) => {
-            result.push(value);
+        const result: UseEffectData[] = [];
+        this.fileMapping.forEach((hashes, file) => {
+            hashes.forEach((hash) => {
+                const call = this.useEffectCalls.get(hash);
+                if (call) {
+                    result.push(call);
+                }
+            });
         });
         return result;
     }
