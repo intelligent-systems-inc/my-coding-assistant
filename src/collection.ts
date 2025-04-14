@@ -33,7 +33,12 @@ export class Collection {
         console.log(`Upserted ${count} useEffect calls`);
     }
 
-    get(opts: any): UseEffectData[] {
+    // should never be undefined
+    getOne(hash: string): UseEffectData | undefined {
+        return this.useEffectCalls.get(hash);
+    }
+
+    get(opts: any = {}): UseEffectData[] {
         // If a file is specified, return useEffect calls for that file
         if (opts['file']) {
             const hashes = this.fileMapping.get(opts['file']) || [];
