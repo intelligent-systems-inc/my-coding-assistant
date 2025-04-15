@@ -44,20 +44,46 @@ class UseEffectCodeLensProvider implements vscode.CodeLensProvider {
 class UseEffectSuggestionProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
   private _useEffectCollection: Collection;
+  
+  static ALL_SUGGESTIONS_VIEW = 'complete';
+  static SPECIFIC_SUGGESTIONS_VIEW = 'specific';
+  // can have values: "complete" & "specific"
+  private _resolveWebViewType: string = UseEffectSuggestionProvider.ALL_SUGGESTIONS_VIEW;
 
   constructor(private readonly context: vscode.ExtensionContext, useEffectCollection: Collection) {
     this._useEffectCollection = useEffectCollection;
+  }
+
+  setResolveWebViewType(type: string) {
+    this._resolveWebViewType = type;
   }
 
   resolveWebviewView(webviewView: vscode.WebviewView, context: vscode.WebviewViewResolveContext, token: vscode.CancellationToken): void {
     console.log("Webview view resolved");
     this._view = webviewView;
     webviewView.webview.options = { enableScripts: true };
-    webviewView.webview.html = this.getHtml(this.allCardsHtml());
 
+    if (this._resolveWebViewType === UseEffectSuggestionProvider.ALL_SUGGESTIONS_VIEW) {
+      webviewView.webview.html = this.getHtml(this.allCardsHtml());
+    }
+    
     webviewView.onDidChangeVisibility(() => {
+      console.log("Webview visibility changed");
       if (webviewView.visible) {
+        // if webview type is specific, then updateView should not be called because
+        // it is called separately when the user clicks on the annotation
+        // also, webview type is changed for future invocations.
+        if (this._resolveWebViewType === UseEffectSuggestionProvider.SPECIFIC_SUGGESTIONS_VIEW) {
+          this.setResolveWebViewType(UseEffectSuggestionProvider.ALL_SUGGESTIONS_VIEW);
+          return;
+        }
         this.updateView();
+      }
+      // webview type is changed for future invocations.
+      // webview type is specific only when the user clicks on annotation.
+      if (this._resolveWebViewType === UseEffectSuggestionProvider.SPECIFIC_SUGGESTIONS_VIEW) {
+        this.setResolveWebViewType(UseEffectSuggestionProvider.ALL_SUGGESTIONS_VIEW);
+        return;
       }
     });
 
@@ -96,7 +122,7 @@ class UseEffectSuggestionProvider implements vscode.WebviewViewProvider {
 
   private allCardsHtml(): string {
     // console.log("Generating HTML for webview, with list ", this._useEffectCalls);
-    const cardsHtml = this._useEffectCollection.get({}) // Get all useEffect calls
+    return this._useEffectCollection.get({}) // Get all useEffect calls
       .map(call => {
         // console.log("-----", call);
         return `
@@ -109,16 +135,14 @@ class UseEffectSuggestionProvider implements vscode.WebviewViewProvider {
         `;
       })
       .join('');
-      return cardsHtml;
   }
 
-  private getHtml(suggestionHtml: string): string {
-
+  private getHtml(suggestionsHtml: string): string {
     return `
       <html>
         <body style="font-family: sans-serif; padding: 1em;">
           <h2>🔍 useEffect Suggestions</h2>
-          ${suggestionHtml || "<p>No useEffect suggestions available.</p>"}
+          ${suggestionsHtml || "<p>No useEffect suggestions available.</p>"}
         </body>
       </html>
     `;
@@ -157,6 +181,7 @@ context.subscriptions.push(
 context.subscriptions.push(
   vscode.commands.registerCommand("react-helper-extension.showSuggestionPanel", async (annotationDetails) => {
     console.log("Annotation clicked:", annotationDetails);
+    suggestionProvider.setResolveWebViewType(UseEffectSuggestionProvider.SPECIFIC_SUGGESTIONS_VIEW);
     await suggestionProvider.updateView({codelensHash: annotationDetails.hash});
     await vscode.commands.executeCommand('workbench.view.extension.reactHelperSidebar');
   })
