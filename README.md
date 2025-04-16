@@ -33,6 +33,7 @@ It automatically detects all `useEffect` calls across your codebase and adds cli
 
 ![Side panel with suggestions](https://github.com/intelligent-systems-inc/my-coding-assistant/tree/main/images/suggestions2.png)
 
+PS: I know I should fix the whole dark on dark theme.
 
 ### 🛠 Installation
 
