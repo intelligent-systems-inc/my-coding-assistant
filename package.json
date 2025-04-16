@@ -1,13 +1,13 @@
 {
-    "name": "react-helper-extension",
-    "displayName": "React Helper Extension",
-    "description": "AI assistant for React best practices, especially useEffect.",
+    "name": "use-effect-assistant",
+    "displayName": "useEffect Assistant",
+    "description": "A VSCode extension that provides suggestions for useEffect hooks in React applications.",
     "version": "0.0.1",
     "engines": {
         "vscode": "^1.80.0"
     },
     "categories": [
-        "Other"
+        "Other" 
     ],
     "activationEvents": [
         "onLanguage:javascript",
@@ -17,24 +17,24 @@
     "contributes": {
         "commands": [
           {
-            "command": "react-helper-extension.showSuggestionPanel",
+            "command": "use-effect-assistant.showSuggestionPanel",
             "title": "Show useEffect Suggestion"
           }
         ],
         "viewsContainers": {
             "activitybar": [
               {
-                "id": "reactHelperSidebar",
-                "title": "React Helper",
+                "id": "useAffectAssistantSidebar",
+                "title": "useAffect Assistant",
                 "icon": "media/icon.png"
               }
             ]
           },
           "views": {
-            "reactHelperSidebar": [
+            "useAffectAssistantSidebar": [
               {
                 "type": "webview",
-                "id": "react-helper-extension.useEffectSuggestionsView",
+                "id": "use-effect-assistant.useEffectSuggestionsView",
                 "name": "useEffect Suggestions"
               }
             ]

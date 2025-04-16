@@ -29,7 +29,7 @@ class UseEffectCodeLensProvider implements vscode.CodeLensProvider {
       this.codeLenses.push(
         new vscode.CodeLens(range, {
           title: "🤍 View Suggestion ",
-          command: "react-helper-extension.showSuggestionPanel",
+          command: "use-effect-assistant.showSuggestionPanel",
           arguments: [{
             hash: effect.hash}]
         })
@@ -177,16 +177,16 @@ const suggestionProvider = new UseEffectSuggestionProvider(context, useEffectCol
 
 context.subscriptions.push(
   vscode.window.registerWebviewViewProvider(
-    "react-helper-extension.useEffectSuggestionsView",
+    "use-effect-assistant.useEffectSuggestionsView",
     suggestionProvider
   )
 );
 
 context.subscriptions.push(
-  vscode.commands.registerCommand("react-helper-extension.showSuggestionPanel", async (annotationDetails) => {
+  vscode.commands.registerCommand("use-effect-assistant.showSuggestionPanel", async (annotationDetails) => {
     suggestionProvider.setResolveWebViewType(UseEffectSuggestionProvider.SPECIFIC_SUGGESTIONS_VIEW);
     await suggestionProvider.updateView({codelensHash: annotationDetails.hash});
-    await vscode.commands.executeCommand('workbench.view.extension.reactHelperSidebar');
+    await vscode.commands.executeCommand('workbench.view.extension.useAffectAssistantSidebar');
   })
 );
 
