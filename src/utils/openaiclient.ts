@@ -2,6 +2,8 @@ import { OpenAI } from "openai";
 
 import { window } from 'vscode';
 
+import { htmlTemplate } from "../prompt/single_card_html_prompt_scaffold";
+
 export class OpenAIClient {
     private client: OpenAI | null = null;
     private static instance: OpenAIClient;
@@ -19,10 +21,17 @@ export class OpenAIClient {
         const userOpenAISecretKey = await window.showInputBox({
             placeHolder: 'Input OpenAI API Key',
         });
-        // console.log(userOpenAISecretKey);
         this.client = new OpenAI({
           apiKey: userOpenAISecretKey,
         });
+    }
+
+    private static getPrompt(): string {
+        const prompt = `For a given useEffect, you have to populate the HTML template provided below.
+        The HTML template contains the following heads: Code Recap, What this does, Potential Issues and Consequences, Suggestions, and Summary. 
+        These heads contain dummy text. You have to replace the dummy text with content according to the heading.
+        Be brief and to the point. Only provide the filled in HTML template in response.\n`
+        return prompt + htmlTemplate;
     }
 
     async getSuggestion(code: string): Promise<string> {
@@ -30,16 +39,20 @@ export class OpenAIClient {
             throw new Error("OpenAI client is not initialized. Refresh IDE and input OpenAI secret key.");
         }
         const response = await this.client.chat.completions.create({
-            model: 'gpt-3.5-turbo',
+            model: "gpt-4.1",
+
             messages: [
                 {
+                    role: 'developer',
+                    content: OpenAIClient.getPrompt(),
+                },
+                {
                     role: 'user',
-                    content: `The following is a useEffect call. Does it follow best practices as per the React documentation and community? If yes, suggest an improvement. If no, say "All good!":\n\n${code}`,
+                    content: code,
                 },
             ],
         });
         const result: string|null = response.choices[0].message.content;
-        console.log("OpenAI response: ", result);
         if (result === "All good!" || result === null) {
             return "";
         }
