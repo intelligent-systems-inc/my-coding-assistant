@@ -24,12 +24,11 @@ class UseEffectCodeLensProvider implements vscode.CodeLensProvider {
     const useEffectCalls = this.useEffectCollection.get({file});
 
     useEffectCalls.forEach(effect => {
-     // console.log(`useEffect at lines ${effect.startLine}-${effect.endLine} with hash: ${effect.hash}`);
-      const position = new vscode.Position(effect.startLine, 0);
+     const position = new vscode.Position(effect.startLine, 0);
       const range = new vscode.Range(position, position);
       this.codeLenses.push(
         new vscode.CodeLens(range, {
-          title: "🤍 View Suggestion 🤍",
+          title: "🤍 View Suggestion ",
           command: "react-helper-extension.showSuggestionPanel",
           arguments: [{
             hash: effect.hash}]
@@ -59,7 +58,6 @@ class UseEffectSuggestionProvider implements vscode.WebviewViewProvider {
   }
 
   resolveWebviewView(webviewView: vscode.WebviewView, context: vscode.WebviewViewResolveContext, token: vscode.CancellationToken): void {
-    console.log("Webview view resolved");
     this._view = webviewView;
     webviewView.webview.options = { enableScripts: true };
 
@@ -68,7 +66,6 @@ class UseEffectSuggestionProvider implements vscode.WebviewViewProvider {
     }
     
     webviewView.onDidChangeVisibility(() => {
-      console.log("Webview visibility changed");
       if (webviewView.visible) {
         // if webview type is specific, then updateView should not be called because
         // it is called separately when the user clicks on the annotation
@@ -105,54 +102,61 @@ class UseEffectSuggestionProvider implements vscode.WebviewViewProvider {
   }
 
   private singleCardHtml(codelensHash: string): string {
-      // console.log("Generating HTML for webview, with list ", this._useEffectCalls);
       const useEffectCall = this._useEffectCollection.getOne(codelensHash);
-      if (!useEffectCall) {
-        return `<p>error.</p>`;
-      }
-      return `
-        <div style="border: 1px solid #ccc; padding: 1em; margin-bottom: 1em; border-radius: 5px;">
-          <h3>useEffect at Line ${useEffectCall.startLine + 1}</h3>
-          <ul>
-            ${useEffectCall.suggestions.map((s: string) => `<li>${s}</li>`).join('')}
-          </ul>
-        </div>
+      let html = `<h2>🔍 useEffect Analysis</h2>`;
+      if (!useEffectCall){
+        return html + `<p>❌ No useEffect found.</p>`;
+      } 
+      html = `<h2>🔍 useEffect Analysis at line ${useEffectCall.startLine}</h2>`;
+      if (useEffectCall.suggestions.length === 0) {
+        return html + `<p>⏳ Loading...</p>`;
+      } 
+      return html +  `
+        ${useEffectCall.suggestions[0]}
       `;
     }
 
   private allCardsHtml(): string {
-    // console.log("Generating HTML for webview, with list ", this._useEffectCalls);
-    return this._useEffectCollection.get({}) // Get all useEffect calls
-      .map(call => {
-        // console.log("-----", call);
-        return `
-          <div style="border: 1px solid #ccc; padding: 1em; margin-bottom: 1em; border-radius: 5px;">
-            <h3>useEffect at Line ${call.startLine + 1}</h3>
-            <ul>
-              ${call.suggestions.map((s: string) => `<li>${s}</li>`).join('')}
-            </ul>
-          </div>
-        `;
-      })
-      .join('');
+    let html = `<h2>🔍 useEffect Suggestions</h2> <p>Select a <i>useEffect</i> to view suggestions for.</p>`;
+
+    // for (const [fileName, hashes] of this._useEffectCollection.getFileMapping().entries()) {
+    //   html += `<ul>${fileName}</ul>\n`;
+    //   for (const hash of hashes) {
+    //     const code = this._useEffectCollection.getOne(hash)?.code;
+    //     if (code) {
+    //       html += `<li>${code}</li>\n`;
+    //     }
+    //   }
+    // }
+
+    return html;
   }
 
   private getHtml(suggestionsHtml: string): string {
     return `
-      <html>
-        <body style="font-family: sans-serif; padding: 1em;">
-          <h2>🔍 useEffect Suggestions</h2>
-          ${suggestionsHtml || "<p>No useEffect suggestions available.</p>"}
-        </body>
-      </html>
-    `;
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+              <meta charset="UTF-8">
+              <title>useEffect Analysis</title>
+              <style>
+                body { font-family: sans-serif; line-height: 1.6; padding: 2rem; max-width: 400px; margin: auto; }
+                code { background-color: #f4f4f4; padding: 0.2rem 0.4rem; border-radius: 4px; }
+                pre { background-color: #f9f9f9; padding: 1rem; border-left: 4px solid #ccc; overflow-x: auto; }
+                table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+                th, td { border: 1px solid #ddd; padding: 0.75rem; text-align: left; }
+                th { background-color: #f2f2f2; }
+              </style>
+            </head>
+            <body>
+            ${suggestionsHtml || "<p>No useEffect suggestions available.</p>"}
+            </body>
+            </html>
+        `;
   }
 }
 
 export function activate(context: vscode.ExtensionContext) {
-
-  console.log('extension loaded');
-
   const useEffectCollection = Collection.getInstance();
   const useEffectCollector = Collector.getInstance();
   useEffectCollector.run();
@@ -180,7 +184,6 @@ context.subscriptions.push(
 
 context.subscriptions.push(
   vscode.commands.registerCommand("react-helper-extension.showSuggestionPanel", async (annotationDetails) => {
-    console.log("Annotation clicked:", annotationDetails);
     suggestionProvider.setResolveWebViewType(UseEffectSuggestionProvider.SPECIFIC_SUGGESTIONS_VIEW);
     await suggestionProvider.updateView({codelensHash: annotationDetails.hash});
     await vscode.commands.executeCommand('workbench.view.extension.reactHelperSidebar');

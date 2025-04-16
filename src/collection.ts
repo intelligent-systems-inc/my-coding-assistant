@@ -103,4 +103,8 @@ export class Collection {
         });
         return result;
     }
+
+    getFileMapping(): Map<string, string[]> {
+        return this.fileMapping;
+    }
 }
