@@ -23,15 +23,15 @@ It automatically detects all `useEffect` calls across your codebase and adds cli
 - 🤖 **Powered by AI**, so it learns and improves over time
 
 
-**Future plans** include sending more code context along with each useEffect call to provide holistic feedback. [See roadmap]().
+**Future plans** include sending more code context along with each useEffect call to provide holistic feedback. [See roadmap](https://github.com/intelligent-systems-inc/my-coding-assistant?tab=readme-ov-file#-roadmap).
 
 ### 📸 Screenshots
 
-![Inline decorations for each useEffect](https://github.com/intelligent-systems-inc/my-coding-assistant/images/annotations.png)
+![Inline decorations for each useEffect](https://github.com/intelligent-systems-inc/my-coding-assistant/tree/main/images/annotations.png)
 
-![Side panel with suggestions](https://github.com/intelligent-systems-inc/my-coding-assistant/images/suggestions1.png)
+![Side panel with suggestions](https://github.com/intelligent-systems-inc/my-coding-assistant/tree/main/images/suggestions1.png)
 
-![Side panel with suggestions](https://github.com/intelligent-systems-inc/my-coding-assistant/images/suggestions2.png)
+![Side panel with suggestions](https://github.com/intelligent-systems-inc/my-coding-assistant/tree/main/images/suggestions2.png)
 
 
 ### 🛠 Installation
